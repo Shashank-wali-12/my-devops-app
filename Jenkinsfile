@@ -16,27 +16,25 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME .'
+                bat 'docker build -t %IMAGE_NAME% .'
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                sh 'docker push $IMAGE_NAME'
+                bat 'docker push %IMAGE_NAME%'
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh 'kubectl apply -f deployment.yaml'
-                sh 'kubectl apply -f service.yaml'
+                bat 'kubectl apply -f deployment.yaml'
             }
         }
 
         stage('Verify Kubernetes') {
             steps {
-                sh 'kubectl get pods'
-                sh 'kubectl get svc'
+                bat 'kubectl get pods'
             }
         }
     }
