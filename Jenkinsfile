@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "shashiwali/myapp:v1"
+        IMAGE_NAME = "yourdockerhubusername/my-devops-app"
+        IMAGE_TAG = "latest"
     }
 
     stages {
@@ -16,25 +17,36 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t %IMAGE_NAME% .'
+                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                bat 'docker push %IMAGE_NAME%'
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+
+                    sh 'docker push $IMAGE_NAME:$IMAGE_TAG'
+                }
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                bat 'kubectl apply -f deployment.yaml'
+                sh 'kubectl apply -f deployment.yaml'
+                sh 'kubectl apply -f service.yaml'
             }
         }
 
         stage('Verify Kubernetes') {
             steps {
-                bat 'kubectl get pods'
+                sh 'kubectl get pods'
+                sh 'kubectl get svc'
             }
         }
     }
